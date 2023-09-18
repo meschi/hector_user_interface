@@ -1,0 +1,4 @@
+module Hector.Style
+singleton Style 1.0 Style.qml
+ObjectDisplayInformationProvider 1.0 ObjectDisplayInformationProvider.qml
+ObjectIconProvider 1.0 ObjectIconProvider.qml

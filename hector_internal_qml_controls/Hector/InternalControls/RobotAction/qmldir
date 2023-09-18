@@ -1,0 +1,5 @@
+module Hector.InternalControls.RobotAction
+ActionButton 1.0 ActionButton.qml
+EditRobotActionDialog 1.0 EditRobotActionDialog.qml
+RobotActionList 1.0 RobotActionList.qml
+RobotActionStructureView 1.0 RobotActionStructureView.qml

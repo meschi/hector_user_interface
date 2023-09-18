@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>hector_user_interface</name>
+  <version>1.0.0</version>
+  <description>The hector_user_interface package</description>
+
+  <maintainer email="fabian@sim.tu-darmstadt.de">Stefan Fabian</maintainer>
+
+  <license>GPLv3</license>
+
+  <author email="fabian@sim.tu-darmstadt.de">Stefan Fabian</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>hector_rviz_overlay</depend>
+  <depend>rviz</depend>
+  <exec_depend>hector_internal_qml_controls</exec_depend>
+  <exec_depend>hector_qml_controls</exec_depend>
+  <exec_depend>hector_user_interface_resources</exec_depend>
+  <exec_depend>libqt5-qml</exec_depend>
+  <exec_depend>mission_msgs</exec_depend>
+  <exec_depend>qml-module-qtmultimedia</exec_depend>
+  <exec_depend>qml-module-qtquick-controls2</exec_depend>
+  <exec_depend>qml-module-qtquick-layouts</exec_depend>
+  <exec_depend>qml-module-qtquick2</exec_depend>
+  <exec_depend>qml_ros_plugin</exec_depend>
+
+  <export>
+    <rviz plugin="${prefix}/plugin_description.xml"/>
+  </export>
+</package>

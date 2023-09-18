@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>hector_user_interface_launch</name>
+  <version>1.0.0</version>
+  <description>The hector_user_interface_launch package</description>
+
+  <maintainer email="fabian@sim.tu-darmstadt.de">Stefan Fabian</maintainer>
+  <author email="fabian@sim.tu-darmstadt.de">Stefan Fabian</author>
+
+  <license>GPLv3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>hector_rviz_plugins</exec_depend>
+  <exec_depend>hector_user_interface</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>rosapi</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>remote_estop_msgs</exec_depend>
+  <exec_depend>pointcloud_accumulator_msgs</exec_depend>
+  <exec_depend>rviz_satellite</exec_depend>
+  <exec_depend>hector_grid_map_compression</exec_depend>
+</package>
