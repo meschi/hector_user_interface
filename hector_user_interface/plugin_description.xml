@@ -13,6 +13,13 @@
             Tool to look at points.
         </description>
     </class>
+    <class name="hector_user_interface/SwipeSkillTool"
+           type="hector_user_interface::SwipeSkillTool"
+           base_class_type="rviz::Tool">
+        <description>
+            Tool to start Swipe Skill.
+        </description>
+    </class>
     <class name="hector_user_interface/UserInterface"
            type="hector_user_interface::UserInterface"
            base_class_type="rviz::Display">

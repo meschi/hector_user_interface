@@ -25,9 +25,11 @@ add_library(${PROJECT_NAME}
   include/hector_user_interface/look_at_tool.h
   include/hector_user_interface/user_interface.h
   include/hector_user_interface/waypoint_tool.h
+  include/hector_user_interface/swipe_skill_tool.h
   src/look_at_tool.cpp
   src/user_interface.cpp
   src/waypoint_tool.cpp
+  src/swipe_skill_tool.cpp
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
