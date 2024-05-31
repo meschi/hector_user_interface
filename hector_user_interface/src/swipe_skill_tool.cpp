@@ -118,7 +118,7 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
     preview_arrow_->getSceneNode()->setVisible(true);
 
     // Place arrow
-    if (event.leftDown()) {
+    if (event.leftDown() && ros::service::exists("/start_swipe_skill", true)) {
       arrow_direction_ =
         Ogre::Vector3(normal_.x, normal_.y, normal_.z);
       arrow_position_ = preview_arrow_position_;
@@ -131,8 +131,8 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       mode_ = MODE_ADAPT_DIRECTION;
       mouse_position_ = {event.x, event.y};
       original_arrow_direction_ = arrow_direction_;
-      // FIXME check if this is correct???
 
+      // send transform and trigger service
       static tf2_ros::StaticTransformBroadcaster static_broadcaster;
       geometry_msgs::TransformStamped static_transformStamped;
 
@@ -149,7 +149,6 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       static_transformStamped.transform.rotation.z = quat.z();
       static_transformStamped.transform.rotation.w = quat.w();
       static_broadcaster.sendTransform(static_transformStamped);
-      // TODO: call create tf frame
       ros::service::waitForService("/start_swipe_skill");  //this is optional
 
       ros::ServiceClient swipeClient
@@ -159,6 +158,66 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       // srv.success, srv.message are the return values
 
       return Render;
+    }
+  }  else if (mode_ == MODE_ADAPT_DIRECTION) {
+    if(event.right())
+        return rviz::InteractionTool::processMouseEvent(event);
+    // adapt intersection point along current arrow_direction
+    Ogre::Real wheel_delta = event.wheel_delta * scroll_factor_;
+    intersection_ += wheel_delta * arrow_direction_;
+    // y-Difference -> turn direction around vector vec
+    Ogre::Vector3 axis = Ogre::Vector3(0,0,1);
+    if(abs(original_arrow_direction_.dotProduct({0,0,1}))>0.5){
+      axis=intersection_ - event.viewport->getCamera()->getPosition();;
+      axis[2] = 0;
+      axis.normalise();
+    }
+    Ogre::Vector3 vec = original_arrow_direction_.crossProduct(axis);
+    Ogre::Quaternion rot = Ogre::Quaternion(
+    Ogre::Degree(change_direction_factor_ * (event.y - mouse_position_.second)), vec);
+    arrow_direction_ = rot * original_arrow_direction_;
+    // x-Difference
+    vec = axis;
+    rot = Ogre::Quaternion(Ogre::Degree(change_direction_factor_ * (event.x - mouse_position_.first)), vec);
+    arrow_direction_ = rot * arrow_direction_;
+    // set new position (end of arrow not tip) and direction
+    arrow_position_ = intersection_ - arrow_direction_ * arrow_length_;
+    arrow_->setDirection(arrow_direction_);
+    arrow_->setPosition(arrow_position_);
+    mouse_position_translation_ = {event.x, event.y};
+    return Render;
+  } else if (mode_ == MODE_ADAPT_POSITION) {
+      if(!event.left()) mode_=MODE_ADAPT_DISTANCE;
+      if(event.right())
+          return rviz::InteractionTool::processMouseEvent(event);
+      // adapt intersection point along current arrow_direction
+      Ogre::Real wheel_delta = event.wheel_delta * scroll_factor_;
+      intersection_ += wheel_delta * arrow_direction_;
+      // y-Difference -> move direction along vector vec
+      Ogre::Vector3 axis = Ogre::Vector3(0,0,1);
+      if(abs(original_arrow_direction_.dotProduct({0,0,1}))>0.5){
+          axis=intersection_ - event.viewport->getCamera()->getPosition();;
+          axis[2] = 0;
+          axis.normalise();
+      }
+      Ogre::Vector3 vec = original_arrow_direction_.crossProduct(axis);
+      intersection_ += change_position_factor_ * (event.x - mouse_position_translation_.first) * vec;
+      // x-Difference
+      vec = axis;
+      intersection_ -= change_position_factor_ * (event.y - mouse_position_translation_.second) * vec;
+      // set new position (end of arrow not tip) and direction
+      arrow_position_ = intersection_ - arrow_direction_ * arrow_length_;
+      arrow_->setPosition(arrow_position_);
+      mouse_position_translation_ = {event.x, event.y};
+      return Render;
+
+  } else if (mode_ == MODE_ADAPT_DISTANCE) {
+    if (event.wheel_delta != 0) {
+      Ogre::Vector3 scrollOffset = event.wheel_delta * scroll_factor_ * arrow_direction_;
+      arrow_->setPosition(arrow_->getPosition() + scrollOffset);
+      return Render;
+    } else if (!event.control()) {
+      exitLookAt();
     }
   }
 
@@ -172,7 +231,26 @@ bool SwipeSkillTool::eventFilter(QObject *object, QEvent *event) {
           if (mode_ == MODE_ADAPT_DISTANCE) {
               exitLookAt();
           }
+      } else {
+          if (keyEvent->key() == Qt::Key_Shift) {
+              if (mode_ == MODE_ADAPT_POSITION) {
+                  mode_ = MODE_ADAPT_DIRECTION;
+                  mouse_position_ = mouse_position_translation_;
+              }
+          }
       }
+  }else if (event->type() == QEvent::KeyPress) {
+      auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
+      if (keyEvent->key() == Qt::Key_Shift) {
+          if (mode_ == MODE_ADAPT_DIRECTION) {
+              mode_ = MODE_ADAPT_POSITION;
+              mouse_position_translation_ = mouse_position_;
+          }
+      }
+  } else if (event->type() == QEvent::MouseButtonRelease) {
+    auto *mouseEvent = dynamic_cast<QMouseEvent *>(event);
+    if (mouseEvent->button() == Qt::MouseButton::LeftButton && mode_ == MODE_ADAPT_DIRECTION)
+        mode_ = MODE_ADAPT_DISTANCE;
   }
   return false;
 }
@@ -185,7 +263,7 @@ void SwipeSkillTool::exitLookAt() {
 void SwipeSkillTool::createArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base, const Ogre::Vector3 &direction,
                              double length, double alpha) {
   arrow = new rviz::Arrow(context_->getSceneManager(), scene_manager_->getRootSceneNode());
-  arrow->set(0.75f * length, 0.07, 0.25 * length, 0.2);
+  arrow->set(0.5f * length, 0.07, 0.5f * length, 0.2);
   arrow->setColor(0., 1.0, 0.6, alpha);
   arrow->setPosition(base);
   arrow->setDirection(direction);
