@@ -19,14 +19,22 @@
 
 #include <ros/ros.h>
 #include <tf2_ros/static_transform_broadcaster.h>
-#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Quaternion.h> // TODO: needed?
 #include <geometry_msgs/TransformStamped.h>
 #include <std_srvs/Trigger.h>
 
+#include <stdio.h>
+
+
+
 namespace hector_user_interface {
+
+const char *SWIPE_DIRECTION_ARROW_RESOURCE = "package://hector_user_interface/media/arrow.dae";
 
 SwipeSkillTool::SwipeSkillTool() {
   shortcut_key_ = 'l';
+  placed = false;
 }
 
 SwipeSkillTool::~SwipeSkillTool() {
@@ -46,13 +54,32 @@ void SwipeSkillTool::deactivate() {
 
 void SwipeSkillTool::onInitialize() {
   rviz::InteractionTool::onInitialize();
-  createArrow(preview_arrow_, Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_X, arrow_length_, 1.2);
+  createPreviewArrow(preview_arrow_, Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_X, arrow_length_, 1.2);
   createArrow(arrow_, Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_X, arrow_length_);
   preview_arrow_position_ = Ogre::Vector3::ZERO;
   arrow_position_ = Ogre::Vector3::ZERO;
   arrow_tip_ = Ogre::Vector3::ZERO;
   arrow_direction_ = Ogre::Vector3::UNIT_X;
   mode_ = MODE_PREVIEW;
+
+  arrow_mesh_ = rviz::loadMeshFromResource(SWIPE_DIRECTION_ARROW_RESOURCE);
+  if ( arrow_mesh_.isNull() ) {
+    ROS_ERROR_NAMED( "hector_user_interface",
+                     "Failed to load waypoint tool orientation preview mesh." );
+    return;
+  }
+}
+
+void setSkillOrientation( Ogre::SceneNode *node, const Ogre::Quaternion &orientation )
+{
+  auto *arrow_node = dynamic_cast<Ogre::SceneNode *>( node->getChild( 0 ) );
+  if ( orientation.Norm() > 0 ) {
+    arrow_node->setPosition( orientation * Ogre::Vector3{ 1, 0, 2 } );
+    arrow_node->setOrientation( orientation );
+    arrow_node->setVisible( true );
+  } else {
+    arrow_node->setVisible( false );
+  }
 }
 
 bool SwipeSkillTool::getNormalAtPoint(rviz::ViewportMouseEvent &event, Ogre::Vector3 &normal) {
@@ -85,8 +112,11 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
   if (arrow_ == nullptr)
     return rviz::InteractionTool::processMouseEvent(event);
 
+  ROS_WARN("mouse  event %i",mode_);
+
   // Show preview arrow
   if (mode_ == MODE_PREVIEW) {
+    ROS_WARN("mode_preview");
     // Compute raycast to get position of arrow
     preview_arrow_->getSceneNode()->setVisible(false);
     arrow_->getSceneNode()->setVisible(false);
@@ -116,9 +146,13 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
     preview_arrow_->setDirection(
       Ogre::Vector3(normal_.x, normal_.y, normal_.z));
     preview_arrow_->getSceneNode()->setVisible(true);
+    if (placed) {
+        arrow_->getSceneNode()->setVisible(true);
+    }
 
     // Place arrow
     if (event.leftDown() && ros::service::exists("/start_swipe_skill", true)) {
+      ROS_WARN("Place Arrow");
       arrow_direction_ =
         Ogre::Vector3(normal_.x, normal_.y, normal_.z);
       arrow_position_ = preview_arrow_position_;
@@ -128,11 +162,14 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       arrow_->getSceneNode()->setVisible(true);
       preview_arrow_->getSceneNode()->setVisible(false);
 
-      mode_ = MODE_ADAPT_DIRECTION;
+      //mode_ = MODE_CHANGE_DIRECTION;
+      mode_ = MODE_EXIT;
       mouse_position_ = {event.x, event.y};
       original_arrow_direction_ = arrow_direction_;
 
-      // send transform and trigger service
+      placed = true;
+
+      // send transform
       static tf2_ros::StaticTransformBroadcaster static_broadcaster;
       geometry_msgs::TransformStamped static_transformStamped;
 
@@ -149,6 +186,38 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       static_transformStamped.transform.rotation.z = quat.z();
       static_transformStamped.transform.rotation.w = quat.w();
       static_broadcaster.sendTransform(static_transformStamped);
+
+      // calculate distance w.r.t. robot base
+      tf2_ros::Buffer tfBuffer;
+      tf2_ros::TransformListener tfListener(tfBuffer);
+
+      geometry_msgs::TransformStamped tf_base_target;
+      if (!tfBuffer.canTransform("base_link", "swipe_target", ros::Time(0), ros::Duration(3.0))) {
+        ROS_WARN("transform not available (base_link, swipe_target)");
+        mode_ = MODE_EXIT;
+        return Render;
+      }
+      try {
+        tf_base_target = tfBuffer.lookupTransform("base_link", "swipe_target",
+                               ros::Time(0));
+      } catch (tf2::TransformException &ex) {
+        ROS_WARN("failed to get transform: %s", ex.what());
+        mode_ = MODE_EXIT;
+        return Render;
+      }
+      Ogre::Real offset_x = tf_base_target.transform.translation.x;
+      Ogre::Real offset_y = tf_base_target.transform.translation.y;
+      Ogre::Real angle = std::atan2(offset_y, offset_x);
+
+      quat.setRPY(0.0, 0.0, angle);
+      static_transformStamped.transform.rotation.x = quat.x();
+      static_transformStamped.transform.rotation.y = quat.y();
+      static_transformStamped.transform.rotation.z = quat.z();
+      static_transformStamped.transform.rotation.w = quat.w();
+      // re-publish rotation
+      static_broadcaster.sendTransform(static_transformStamped);
+
+      // trigger service
       ros::service::waitForService("/start_swipe_skill");  //this is optional
 
       ros::ServiceClient swipeClient
@@ -156,106 +225,41 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       std_srvs::Trigger srv;
       swipeClient.call(srv);
       // srv.success, srv.message are the return values
-
-      return Render;
-    }
-  }  else if (mode_ == MODE_ADAPT_DIRECTION) {
-    if(event.right())
-        return rviz::InteractionTool::processMouseEvent(event);
-    // adapt intersection point along current arrow_direction
-    Ogre::Real wheel_delta = event.wheel_delta * scroll_factor_;
-    intersection_ += wheel_delta * arrow_direction_;
-    // y-Difference -> turn direction around vector vec
-    Ogre::Vector3 axis = Ogre::Vector3(0,0,1);
-    if(abs(original_arrow_direction_.dotProduct({0,0,1}))>0.5){
-      axis=intersection_ - event.viewport->getCamera()->getPosition();;
-      axis[2] = 0;
-      axis.normalise();
-    }
-    Ogre::Vector3 vec = original_arrow_direction_.crossProduct(axis);
-    Ogre::Quaternion rot = Ogre::Quaternion(
-    Ogre::Degree(change_direction_factor_ * (event.y - mouse_position_.second)), vec);
-    arrow_direction_ = rot * original_arrow_direction_;
-    // x-Difference
-    vec = axis;
-    rot = Ogre::Quaternion(Ogre::Degree(change_direction_factor_ * (event.x - mouse_position_.first)), vec);
-    arrow_direction_ = rot * arrow_direction_;
-    // set new position (end of arrow not tip) and direction
-    arrow_position_ = intersection_ - arrow_direction_ * arrow_length_;
-    arrow_->setDirection(arrow_direction_);
-    arrow_->setPosition(arrow_position_);
-    mouse_position_translation_ = {event.x, event.y};
-    return Render;
-  } else if (mode_ == MODE_ADAPT_POSITION) {
-      if(!event.left()) mode_=MODE_ADAPT_DISTANCE;
-      if(event.right())
-          return rviz::InteractionTool::processMouseEvent(event);
-      // adapt intersection point along current arrow_direction
-      Ogre::Real wheel_delta = event.wheel_delta * scroll_factor_;
-      intersection_ += wheel_delta * arrow_direction_;
-      // y-Difference -> move direction along vector vec
-      Ogre::Vector3 axis = Ogre::Vector3(0,0,1);
-      if(abs(original_arrow_direction_.dotProduct({0,0,1}))>0.5){
-          axis=intersection_ - event.viewport->getCamera()->getPosition();;
-          axis[2] = 0;
-          axis.normalise();
+      if (srv.response.success) {
+        arrow_->setColor(0., 1.0, 0.6, 1.);
+      } else {
+        arrow_->setColor(0.6, 0.6, 0.6, 1.);
       }
-      Ogre::Vector3 vec = original_arrow_direction_.crossProduct(axis);
-      intersection_ += change_position_factor_ * (event.x - mouse_position_translation_.first) * vec;
-      // x-Difference
-      vec = axis;
-      intersection_ -= change_position_factor_ * (event.y - mouse_position_translation_.second) * vec;
-      // set new position (end of arrow not tip) and direction
-      arrow_position_ = intersection_ - arrow_direction_ * arrow_length_;
-      arrow_->setPosition(arrow_position_);
-      mouse_position_translation_ = {event.x, event.y};
-      return Render;
 
-  } else if (mode_ == MODE_ADAPT_DISTANCE) {
-    if (event.wheel_delta != 0) {
-      Ogre::Vector3 scrollOffset = event.wheel_delta * scroll_factor_ * arrow_direction_;
-      arrow_->setPosition(arrow_->getPosition() + scrollOffset);
+      // set orientation of skill
+      //ROS_WARN("going to set skill orientation");
+      //setSkillOrientation(arrow_->getSceneNode(), orientation);
+      ROS_WARN("set skill orientation");
+
+
       return Render;
-    } else if (!event.control()) {
-      exitLookAt();
     }
+  } else if (mode_ == MODE_CHANGE_DIRECTION) {
+    ROS_WARN("mode_change_direction");
+    // TODO change direction if mouse is far enough away from placed arrow
+    // setSkillRotation(w.r.t mouse selection)
+    mode_ == MODE_EXIT;
   }
 
   return rviz::InteractionTool::processMouseEvent(event);
 }
 
 bool SwipeSkillTool::eventFilter(QObject *object, QEvent *event) {
-  if (event->type() == QEvent::KeyRelease) {
-      auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-      if (keyEvent->key() == Qt::Key_Control) {
-          if (mode_ == MODE_ADAPT_DISTANCE) {
-              exitLookAt();
-          }
-      } else {
-          if (keyEvent->key() == Qt::Key_Shift) {
-              if (mode_ == MODE_ADAPT_POSITION) {
-                  mode_ = MODE_ADAPT_DIRECTION;
-                  mouse_position_ = mouse_position_translation_;
-              }
-          }
-      }
-  }else if (event->type() == QEvent::KeyPress) {
-      auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
-      if (keyEvent->key() == Qt::Key_Shift) {
-          if (mode_ == MODE_ADAPT_DIRECTION) {
-              mode_ = MODE_ADAPT_POSITION;
-              mouse_position_translation_ = mouse_position_;
-          }
-      }
-  } else if (event->type() == QEvent::MouseButtonRelease) {
+  if (event->type() == QEvent::MouseButtonRelease) {
     auto *mouseEvent = dynamic_cast<QMouseEvent *>(event);
-    if (mouseEvent->button() == Qt::MouseButton::LeftButton && mode_ == MODE_ADAPT_DIRECTION)
-        mode_ = MODE_ADAPT_DISTANCE;
+    //if (mouseEvent->button() == Qt::MouseButton::LeftButton && mode_ == MODE_EXIT)
+    if (mode_ == MODE_EXIT)
+        exitSwipeSkill();
   }
   return false;
 }
 
-void SwipeSkillTool::exitLookAt() {
+void SwipeSkillTool::exitSwipeSkill() {
   mode_ = MODE_PREVIEW;
   context_->getToolManager()->setCurrentTool(context_->getToolManager()->getDefaultTool());
 }
@@ -265,6 +269,16 @@ void SwipeSkillTool::createArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base,
   arrow = new rviz::Arrow(context_->getSceneManager(), scene_manager_->getRootSceneNode());
   arrow->set(0.5f * length, 0.07, 0.5f * length, 0.2);
   arrow->setColor(0., 1.0, 0.6, alpha);
+  arrow->setPosition(base);
+  arrow->setDirection(direction);
+  arrow->getSceneNode()->setVisible(false);
+}
+
+void SwipeSkillTool::createPreviewArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base, const Ogre::Vector3 &direction,
+                             double length, double alpha) {
+  arrow = new rviz::Arrow(context_->getSceneManager(), scene_manager_->getRootSceneNode());
+  arrow->set(0.5f * length, 0.05, 0.5f * length, 0.15);
+  arrow->setColor(1., 0.3, 0.0, alpha);
   arrow->setPosition(base);
   arrow->setDirection(direction);
   arrow->getSceneNode()->setVisible(false);

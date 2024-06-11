@@ -30,9 +30,8 @@ Q_OBJECT
 
   enum SelectionMode {
     MODE_PREVIEW,
-    MODE_ADAPT_DIRECTION,
-    MODE_ADAPT_DISTANCE,
-    MODE_ADAPT_POSITION
+    MODE_CHANGE_DIRECTION,
+    MODE_EXIT
   };
 
 public:
@@ -57,17 +56,20 @@ signals:
   void lookAtChanged();
 
 protected:
-  void exitLookAt();
+  void exitSwipeSkill();
 
   void onInitialize() override;
 
   void createArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base, const Ogre::Vector3 &direction, double length,
+                   double alpha = 1.0);
+  void createPreviewArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base, const Ogre::Vector3 &direction, double length,
                    double alpha = 1.0);
 
   bool eventFilter(QObject *object, QEvent *event) override;
 
   bool getNormalAtPoint(rviz::ViewportMouseEvent &event, Ogre::Vector3 &normal);
 
+  Ogre::MeshPtr arrow_mesh_;
   rviz::Arrow *arrow_ = nullptr;
   rviz::Arrow *preview_arrow_ = nullptr;
   Ogre::Vector3 preview_arrow_position_, camera_intersection_offset_, normal_;
@@ -80,6 +82,8 @@ protected:
   Ogre::Real change_position_factor_ = 0.005;
   SelectionMode mode_;
   ros::NodeHandle nh_;
+
+  bool placed;
 };
 }  // namespace hector_user_interface
 
