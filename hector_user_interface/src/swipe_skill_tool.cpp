@@ -40,6 +40,10 @@ SwipeSkillTool::SwipeSkillTool() {
 SwipeSkillTool::~SwipeSkillTool() {
   delete preview_arrow_;
   delete arrow_;
+  direction_node_->removeAndDestroyAllChildren();
+  // Destroy waypoint node
+  scene_manager_->getRootSceneNode()->removeChild( direction_node_ );
+  delete direction_node_;
 }
 
 void SwipeSkillTool::activate() {
@@ -62,24 +66,25 @@ void SwipeSkillTool::onInitialize() {
   arrow_direction_ = Ogre::Vector3::UNIT_X;
   mode_ = MODE_PREVIEW;
 
-  arrow_mesh_ = rviz::loadMeshFromResource(SWIPE_DIRECTION_ARROW_RESOURCE);
-  if ( arrow_mesh_.isNull() ) {
+  Ogre::SceneNode *node = scene_manager_->getRootSceneNode()->createChildSceneNode();
+  direction_mesh_ = rviz::loadMeshFromResource(SWIPE_DIRECTION_ARROW_RESOURCE);
+  direction_node_ = node->createChildSceneNode();
+  Ogre::Entity *entity = scene_manager_->createEntity( direction_mesh_ );
+  direction_node_->attachObject( entity );
+  direction_node_->setVisible( false );
+  direction_node_->setScale( 30 * 0.1f, 30 * 0.1f, 30 * 0.1f);
+
+  if ( direction_mesh_.isNull() ) {
     ROS_ERROR_NAMED( "hector_user_interface",
                      "Failed to load waypoint tool orientation preview mesh." );
     return;
   }
 }
 
-void setSkillOrientation( Ogre::SceneNode *node, const Ogre::Quaternion &orientation )
-{
-  auto *arrow_node = dynamic_cast<Ogre::SceneNode *>( node->getChild( 0 ) );
-  if ( orientation.Norm() > 0 ) {
-    arrow_node->setPosition( orientation * Ogre::Vector3{ 1, 0, 2 } );
-    arrow_node->setOrientation( orientation );
-    arrow_node->setVisible( true );
-  } else {
-    arrow_node->setVisible( false );
-  }
+void SwipeSkillTool::setSkillOrientation(const Ogre::Quaternion &orientation) {
+  direction_node_->setPosition( orientation * Ogre::Vector3{ 1, 0, 2 } );
+  direction_node_->setOrientation( orientation );
+  direction_node_->setVisible( true );
 }
 
 bool SwipeSkillTool::getNormalAtPoint(rviz::ViewportMouseEvent &event, Ogre::Vector3 &normal) {
@@ -233,8 +238,9 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
       // set orientation of skill
       //ROS_WARN("going to set skill orientation");
-      //setSkillOrientation(arrow_->getSceneNode(), orientation);
-      ROS_WARN("set skill orientation");
+      Ogre::Quaternion orientation = Ogre::Quaternion(quat.w(), quat.x(), quat.y(), quat.z());
+      setSkillOrientation(orientation);
+      //ROS_WARN("set skill orientation");
 
 
       return Render;
@@ -262,6 +268,7 @@ bool SwipeSkillTool::eventFilter(QObject *object, QEvent *event) {
 void SwipeSkillTool::exitSwipeSkill() {
   mode_ = MODE_PREVIEW;
   context_->getToolManager()->setCurrentTool(context_->getToolManager()->getDefaultTool());
+  direction_node_->setVisible( false );
 }
 
 void SwipeSkillTool::createArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base, const Ogre::Vector3 &direction,
