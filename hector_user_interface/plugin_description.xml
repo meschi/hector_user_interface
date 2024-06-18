@@ -20,6 +20,13 @@
             Tool to start Swipe Skill.
         </description>
     </class>
+        <class name="hector_user_interface/StopSwipeTool"
+           type="hector_user_interface::StopSwipeTool"
+           base_class_type="rviz::Tool">
+        <description>
+            Tool to stop Swipe Skill.
+        </description>
+    </class>
     <class name="hector_user_interface/UserInterface"
            type="hector_user_interface::UserInterface"
            base_class_type="rviz::Display">

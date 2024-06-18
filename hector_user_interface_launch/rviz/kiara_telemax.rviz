@@ -12,10 +12,11 @@ Panels:
         - /Default Cloud Cut1/Autocompute Value Bounds1
         - /Path1/Offset1
         - /Image1
+        - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
       Splitter Ratio: 0.38190552592277527
-    Tree Height: 1225
+    Tree Height: 553
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -25,6 +26,8 @@ Panels:
       - /Publish Point1
       - /2D Pose Estimate1
       - /Place Obstacle Tool1
+      - /Swipe Skill Tool1
+      - /Stop Swipe Tool1
     Name: Tool Properties
     Splitter Ratio: 0.5896103978157043
   - Class: rviz/Views
@@ -38,7 +41,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: Default Cloud Cut
   - Class: scene_graph_rviz/SceneGraphPanel
     Id: 0
     Name: SceneGraphPanel
@@ -73,6 +76,7 @@ Visualization Manager:
       Configuration:
         Battery Topic: /battery_state
         Branding: true
+        Connectivity Loss Navigation Topic: /connectivity_loss_return_navigation_node/state
         Dash Height: 213.16844177246094
         Maximum Latency: 150
         Network Topic: /processed_connectivity
@@ -548,11 +552,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        automess_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         back_rgbd_cam_link:
           Alpha: 1
           Show Axes: false
@@ -674,6 +673,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        radeye_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         right_finger_end_link:
           Alpha: 1
           Show Axes: false
@@ -713,11 +717,31 @@ Visualization Manager:
       Color Transformer: AxisColor
       Decay Time: 0
       Enable filtering:
-        Filtered Axis: Z
+        Filter by Channel Value:
+          Channel: ""
+          Channel Max Value: 255
+          Channel Min Value: -255
+          Value: false
         Frame: world
-        Max Value: 2
-        Min Value: -2
+        Radial Filter:
+          Radius: 5
+          Value: false
+        Use other Axes:
+          Axes Frame: world
+          Value: false
         Value: false
+        X Filter:
+          Value: false
+          X Max Value: 2
+          X Min Value: -2
+        Y Filter:
+          Value: false
+          Y Max Value: 2
+          Y Min Value: -2
+        Z Filter:
+          Value: false
+          Z Max Value: 2
+          Z Min Value: -2
       Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -747,11 +771,31 @@ Visualization Manager:
       Color Transformer: AxisColor
       Decay Time: 1
       Enable filtering:
-        Filtered Axis: Z
+        Filter by Channel Value:
+          Channel: ""
+          Channel Max Value: 255
+          Channel Min Value: -255
+          Value: false
         Frame: world
-        Max Value: 2
-        Min Value: -2
+        Radial Filter:
+          Radius: 5
+          Value: false
+        Use other Axes:
+          Axes Frame: world
+          Value: false
         Value: false
+        X Filter:
+          Value: false
+          X Max Value: 2
+          X Min Value: -2
+        Y Filter:
+          Value: false
+          Y Max Value: 2
+          Y Min Value: -2
+        Z Filter:
+          Value: false
+          Z Max Value: 2
+          Z Min Value: -2
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -781,11 +825,31 @@ Visualization Manager:
       Color Transformer: AxisColor
       Decay Time: 20
       Enable filtering:
-        Filtered Axis: Z
+        Filter by Channel Value:
+          Channel: ""
+          Channel Max Value: 255
+          Channel Min Value: -255
+          Value: false
         Frame: world
-        Max Value: 2
-        Min Value: -2
+        Radial Filter:
+          Radius: 5
+          Value: false
+        Use other Axes:
+          Axes Frame: world
+          Value: false
         Value: false
+        X Filter:
+          Value: false
+          X Max Value: 2
+          X Min Value: -2
+        Y Filter:
+          Value: false
+          Y Max Value: 2
+          Y Min Value: -2
+        Z Filter:
+          Value: false
+          Z Max Value: 2
+          Z Min Value: -2
       Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -907,11 +971,31 @@ Visualization Manager:
       Color Transformer: RGB8
       Decay Time: 0
       Enable filtering:
-        Filtered Axis: Z
+        Filter by Channel Value:
+          Channel: ""
+          Channel Max Value: 255
+          Channel Min Value: -255
+          Value: false
         Frame: world
-        Max Value: 2
-        Min Value: -2
+        Radial Filter:
+          Radius: 5
+          Value: false
+        Use other Axes:
+          Axes Frame: world
+          Value: false
         Value: false
+        X Filter:
+          Value: false
+          X Max Value: 2
+          X Min Value: -2
+        Y Filter:
+          Value: false
+          Y Max Value: 2
+          Y Min Value: -2
+        Z Filter:
+          Value: false
+          Z Max Value: 2
+          Z Min Value: -2
       Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -994,7 +1078,7 @@ Visualization Manager:
       Marker Topic: /trajectory_node_list
       Name: Trajectory
       Namespaces:
-        Trajectory 0: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -1042,12 +1126,148 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Filter (blacklist): ""
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        arm_link_0:
+          Value: true
+        arm_link_1:
+          Value: true
+        arm_link_2:
+          Value: true
+        arm_link_3:
+          Value: true
+        arm_link_4:
+          Value: true
+        arm_link_5:
+          Value: true
+        arm_rgbd_cam_color_frame:
+          Value: true
+        arm_rgbd_cam_color_optical_frame:
+          Value: true
+        arm_rgbd_cam_depth_frame:
+          Value: true
+        arm_rgbd_cam_depth_optical_frame:
+          Value: true
+        arm_rgbd_cam_link:
+          Value: true
+        arm_rgbd_cam_mount_link:
+          Value: true
+        arm_sensor_box_link:
+          Value: true
+        arm_tele_cam_link:
+          Value: true
+        arm_tele_cam_optical_frame:
+          Value: true
+        arm_thermal_cam_frame:
+          Value: true
+        arm_thermal_cam_optical_frame:
+          Value: true
+        back_rgbd_cam_color_frame:
+          Value: true
+        back_rgbd_cam_color_optical_frame:
+          Value: true
+        back_rgbd_cam_depth_frame:
+          Value: true
+        back_rgbd_cam_depth_optical_frame:
+          Value: true
+        back_rgbd_cam_link:
+          Value: true
+        back_rgbd_cam_mount_link:
+          Value: true
+        base_link:
+          Value: true
+        base_stabilized:
+          Value: true
+        camera360_center_link:
+          Value: true
+        camera360_left_link:
+          Value: true
+        camera360_left_optical_frame:
+          Value: true
+        camera360_right_link:
+          Value: true
+        camera360_right_optical_frame:
+          Value: true
+        chassis_link:
+          Value: true
+        flipper_back_left_link:
+          Value: true
+        flipper_back_left_motor_link:
+          Value: true
+        flipper_back_right_link:
+          Value: true
+        flipper_back_right_motor_link:
+          Value: true
+        flipper_front_left_link:
+          Value: true
+        flipper_front_left_motor_link:
+          Value: true
+        flipper_front_right_link:
+          Value: true
+        flipper_front_right_motor_link:
+          Value: true
+        front_rgbd_cam_color_frame:
+          Value: true
+        front_rgbd_cam_color_optical_frame:
+          Value: true
+        front_rgbd_cam_depth_frame:
+          Value: true
+        front_rgbd_cam_depth_optical_frame:
+          Value: true
+        front_rgbd_cam_link:
+          Value: true
+        front_rgbd_cam_mount_link:
+          Value: true
+        gripper_servo_link:
+          Value: true
+        gripper_tcp_link:
+          Value: true
+        imu_link:
+          Value: true
+        left_finger_end_link:
+          Value: true
+        left_finger_middle_link:
+          Value: true
+        manipulator_base_link:
+          Value: true
+        navigation_module_lidar_frame:
+          Value: true
+        navigation_module_link:
+          Value: true
+        odom:
+          Value: true
+        pinhole_back_camera_frame:
+          Value: true
+        pinhole_back_optical_frame:
+          Value: true
+        pinhole_front_camera_frame:
+          Value: true
+        pinhole_front_optical_frame:
+          Value: true
+        pinhole_vision_back_camera_frame:
+          Value: true
+        pinhole_vision_back_optical_frame:
+          Value: true
+        pinhole_vision_left_camera_frame:
+          Value: true
+        pinhole_vision_left_optical_frame:
+          Value: true
+        pinhole_vision_right_camera_frame:
+          Value: true
+        pinhole_vision_right_optical_frame:
+          Value: true
+        radeye_link:
+          Value: true
+        right_finger_end_link:
+          Value: true
+        right_finger_middle_link:
+          Value: true
+        world:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -1055,9 +1275,102 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          odom:
+            base_link:
+              base_stabilized:
+                {}
+              chassis_link:
+                flipper_back_left_motor_link:
+                  flipper_back_left_link:
+                    {}
+                flipper_back_right_motor_link:
+                  flipper_back_right_link:
+                    {}
+                flipper_front_left_motor_link:
+                  flipper_front_left_link:
+                    {}
+                flipper_front_right_motor_link:
+                  flipper_front_right_link:
+                    {}
+                navigation_module_link:
+                  back_rgbd_cam_mount_link:
+                    back_rgbd_cam_link:
+                      back_rgbd_cam_color_frame:
+                        back_rgbd_cam_color_optical_frame:
+                          {}
+                      back_rgbd_cam_depth_frame:
+                        back_rgbd_cam_depth_optical_frame:
+                          {}
+                  camera360_center_link:
+                    camera360_right_link:
+                      camera360_right_optical_frame:
+                        camera360_left_optical_frame:
+                          camera360_left_link:
+                            {}
+                    pinhole_back_camera_frame:
+                      pinhole_back_optical_frame:
+                        {}
+                    pinhole_front_camera_frame:
+                      pinhole_front_optical_frame:
+                        {}
+                    pinhole_vision_back_camera_frame:
+                      pinhole_vision_back_optical_frame:
+                        {}
+                    pinhole_vision_left_camera_frame:
+                      pinhole_vision_left_optical_frame:
+                        {}
+                    pinhole_vision_right_camera_frame:
+                      pinhole_vision_right_optical_frame:
+                        {}
+                  imu_link:
+                    {}
+                  navigation_module_lidar_frame:
+                    {}
+              manipulator_base_link:
+                arm_link_0:
+                  arm_link_1:
+                    arm_link_2:
+                      arm_link_3:
+                        arm_link_4:
+                          arm_link_5:
+                            gripper_servo_link:
+                              {}
+                            gripper_tcp_link:
+                              {}
+                            left_finger_middle_link:
+                              left_finger_end_link:
+                                {}
+                            right_finger_middle_link:
+                              right_finger_end_link:
+                                {}
+                          arm_sensor_box_link:
+                            arm_rgbd_cam_mount_link:
+                              arm_rgbd_cam_link:
+                                arm_rgbd_cam_color_frame:
+                                  arm_rgbd_cam_color_optical_frame:
+                                    {}
+                                arm_rgbd_cam_depth_frame:
+                                  arm_rgbd_cam_depth_optical_frame:
+                                    {}
+                            arm_tele_cam_link:
+                              arm_tele_cam_optical_frame:
+                                {}
+                            arm_thermal_cam_frame:
+                              arm_thermal_cam_optical_frame:
+                                {}
+                          radeye_link:
+                            {}
+                  front_rgbd_cam_mount_link:
+                    front_rgbd_cam_link:
+                      front_rgbd_cam_color_frame:
+                        front_rgbd_cam_color_optical_frame:
+                          {}
+                      front_rgbd_cam_depth_frame:
+                        front_rgbd_cam_depth_optical_frame:
+                          {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /connectivity_loss_return_navigation_node/connectivity_return_marker
@@ -1096,7 +1409,7 @@ Visualization Manager:
       Value: false
   Enabled: true
   Global Options:
-    Background Color: 255; 255; 255
+    Background Color: 160; 160; 160
     Default Light: true
     Fixed Frame: world
     Frame Rate: 30
@@ -1124,6 +1437,10 @@ Visualization Manager:
       "Remove Topic ": hector_obstacle_server/remove_obstacles
       "Ret Obstacle Topic ": hector_obstacle_server/get_obstacle_model
     - Class: hector_supervision_ui_rviz_plugins/HectorPlaceVictimTool
+    - Class: hector_user_interface/SwipeSkillTool
+      Hide Inactive Objects: true
+    - Class: hector_user_interface/StopSwipeTool
+      Hide Inactive Objects: true
   Value: true
   Views:
     Current:
@@ -1131,7 +1448,7 @@ Visualization Manager:
       Angle: 0
       Animation Duration: 1
       Class: hector_rviz_plugins/HectorViewController
-      Distance: 23.16141700744629
+      Distance: 1.066741943359375
       Enable Services: true
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -1140,23 +1457,23 @@ Visualization Manager:
         Value: false
       Enable Topics: true
       Eye:
-        X: -6.177366733551025
-        Y: -13.06343936920166
-        Z: 18.173622131347656
+        X: -2.883986711502075
+        Y: 8.86412525177002
+        Z: 1.6961402893066406
       Eye 3D Offset:
         X: -7.62939453125e-06
         Y: 0
         Z: 3
       Focus:
-        X: -0.3540036082267761
-        Y: 0.16724130511283875
-        Z: 0.0769706517457962
+        X: -2.6551787853240967
+        Y: 8.343123435974121
+        Z: 0.7938418388366699
       Invert Z Axis: false
       Keyboard Navigation: true
       Movement speed (m/s): 4
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Tracked Frame: base_link
+      Tracked Frame: ""
       Tracked Frame P-Gain: 3
       Up:
         X: 0
@@ -1166,12 +1483,12 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 1376
+  Height: 704
   Hide Left Dock: true
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000032800000506fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000444000003860000033c000000b2fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d00000506000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e005300630065006e00650047007200610070006800500061006e0065006c000000017f0000024b0000006e00fffffffb00000020005400610073006b0050006c0061006e006e0065007200500061006e0065006c00000002900000029b0000006e00fffffffb0000000a0049006d0061006700650000000310000000cb0000001600ffffff000000010000033300000cabfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002700000cab000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000013880000005afc0100000002fb0000000800540069006d00650000000000000013880000041800fffffffb0000000800540069006d00650100000000000004500000000000000000000004ec0000050600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000032800000266fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f0070006500720074006900650073020000021a0000024e0000033c000000b2fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d00000266000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001e005300630065006e00650047007200610070006800500061006e0065006c000000017f0000024b0000006e00fffffffb00000020005400610073006b0050006c0061006e006e0065007200500061006e0065006c00000002900000029b0000006e00fffffffb0000000a0049006d0061006700650000000310000000cb0000001600ffffff000000010000033300000cabfc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000002700000cab000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000013880000005afc0100000002fb0000000800540069006d00650000000000000013880000041800fffffffb0000000800540069006d00650100000000000004500000000000000000000005560000026600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   SceneGraphPanel:
     collapsed: false
   Selection:
@@ -1184,6 +1501,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1260
-  X: 3220
+  Width: 1366
+  X: 0
   Y: 27

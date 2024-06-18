@@ -40,10 +40,6 @@ SwipeSkillTool::SwipeSkillTool() {
 SwipeSkillTool::~SwipeSkillTool() {
   delete preview_arrow_;
   delete arrow_;
-  direction_node_->removeAndDestroyAllChildren();
-  // Destroy waypoint node
-  scene_manager_->getRootSceneNode()->removeChild( direction_node_ );
-  delete direction_node_;
 }
 
 void SwipeSkillTool::activate() {
@@ -67,24 +63,6 @@ void SwipeSkillTool::onInitialize() {
   mode_ = MODE_PREVIEW;
 
   Ogre::SceneNode *node = scene_manager_->getRootSceneNode()->createChildSceneNode();
-  direction_mesh_ = rviz::loadMeshFromResource(SWIPE_DIRECTION_ARROW_RESOURCE);
-  direction_node_ = node->createChildSceneNode();
-  Ogre::Entity *entity = scene_manager_->createEntity( direction_mesh_ );
-  direction_node_->attachObject( entity );
-  direction_node_->setVisible( false );
-  direction_node_->setScale( 30 * 0.1f, 30 * 0.1f, 30 * 0.1f);
-
-  if ( direction_mesh_.isNull() ) {
-    ROS_ERROR_NAMED( "hector_user_interface",
-                     "Failed to load waypoint tool orientation preview mesh." );
-    return;
-  }
-}
-
-void SwipeSkillTool::setSkillOrientation(const Ogre::Quaternion &orientation) {
-  direction_node_->setPosition( orientation * Ogre::Vector3{ 1, 0, 2 } );
-  direction_node_->setOrientation( orientation );
-  direction_node_->setVisible( true );
 }
 
 bool SwipeSkillTool::getNormalAtPoint(rviz::ViewportMouseEvent &event, Ogre::Vector3 &normal) {
@@ -180,7 +158,7 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
       static_transformStamped.header.stamp = ros::Time::now();
       static_transformStamped.header.frame_id = "world";
-      static_transformStamped.child_frame_id = "swipe_target";
+      static_transformStamped.child_frame_id = "rviz_swipe_marker";
       static_transformStamped.transform.translation.x = arrow_tip_[0];
       static_transformStamped.transform.translation.y = arrow_tip_[1];
       static_transformStamped.transform.translation.z = arrow_tip_[2];
@@ -197,24 +175,31 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       tf2_ros::TransformListener tfListener(tfBuffer);
 
       geometry_msgs::TransformStamped tf_base_target;
-      if (!tfBuffer.canTransform("base_link", "swipe_target", ros::Time(0), ros::Duration(3.0))) {
+      if (!tfBuffer.canTransform("base_link", "rviz_swipe_marker", ros::Time(0), ros::Duration(3.0))) {
         ROS_WARN("transform not available (base_link, swipe_target)");
-        mode_ = MODE_EXIT;
         return Render;
       }
       try {
-        tf_base_target = tfBuffer.lookupTransform("base_link", "swipe_target",
+        tf_base_target = tfBuffer.lookupTransform("base_link", "rviz_swipe_marker",
                                ros::Time(0));
       } catch (tf2::TransformException &ex) {
         ROS_WARN("failed to get transform: %s", ex.what());
-        mode_ = MODE_EXIT;
         return Render;
       }
+
+      tf2::Quaternion base_rot(tf_base_target.transform.rotation.x, tf_base_target.transform.rotation.y, tf_base_target.transform.rotation.z, -tf_base_target.transform.rotation.w);
+
       Ogre::Real offset_x = tf_base_target.transform.translation.x;
       Ogre::Real offset_y = tf_base_target.transform.translation.y;
-      Ogre::Real angle = std::atan2(offset_y, offset_x);
+      ROS_WARN("offset x, offset y: %f, %f", offset_x, offset_y);
+      float pi = 3.14159;
+      Ogre::Real angle = std::atan2(offset_x, offset_y);
+      angle = -(angle-(pi/2)); // -: ccw to cw
+      ROS_WARN("angle: %f", angle);
 
       quat.setRPY(0.0, 0.0, angle);
+      quat = base_rot*quat; // add base rotation
+      static_transformStamped.child_frame_id = "swipe_target";
       static_transformStamped.transform.rotation.x = quat.x();
       static_transformStamped.transform.rotation.y = quat.y();
       static_transformStamped.transform.rotation.z = quat.z();
@@ -239,17 +224,10 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       // set orientation of skill
       //ROS_WARN("going to set skill orientation");
       Ogre::Quaternion orientation = Ogre::Quaternion(quat.w(), quat.x(), quat.y(), quat.z());
-      setSkillOrientation(orientation);
       //ROS_WARN("set skill orientation");
-
 
       return Render;
     }
-  } else if (mode_ == MODE_CHANGE_DIRECTION) {
-    ROS_WARN("mode_change_direction");
-    // TODO change direction if mouse is far enough away from placed arrow
-    // setSkillRotation(w.r.t mouse selection)
-    mode_ == MODE_EXIT;
   }
 
   return rviz::InteractionTool::processMouseEvent(event);
@@ -268,7 +246,6 @@ bool SwipeSkillTool::eventFilter(QObject *object, QEvent *event) {
 void SwipeSkillTool::exitSwipeSkill() {
   mode_ = MODE_PREVIEW;
   context_->getToolManager()->setCurrentTool(context_->getToolManager()->getDefaultTool());
-  direction_node_->setVisible( false );
 }
 
 void SwipeSkillTool::createArrow(rviz::Arrow *&arrow, const Ogre::Vector3 &base, const Ogre::Vector3 &direction,

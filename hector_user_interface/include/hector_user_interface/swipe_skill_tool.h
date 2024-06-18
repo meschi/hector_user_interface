@@ -74,7 +74,6 @@ protected:
   Ogre::MeshPtr direction_mesh_;
   rviz::Arrow *arrow_ = nullptr;
   rviz::Arrow *preview_arrow_ = nullptr;
-  Ogre::SceneNode *direction_node_ = nullptr;
   Ogre::Vector3 preview_arrow_position_, camera_intersection_offset_, normal_;
   Ogre::Vector3 arrow_position_, arrow_tip_, arrow_direction_;
   Ogre::Vector3 original_arrow_direction_, intersection_;
