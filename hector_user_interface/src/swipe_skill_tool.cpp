@@ -218,7 +218,7 @@ int SwipeSkillTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       if (srv.response.success) {
         arrow_->setColor(0., 1.0, 0.6, 1.);
       } else {
-        arrow_->setColor(0.6, 0.6, 0.6, 1.);
+        arrow_->setColor(1., 0.3, 0.0, 1.);
       }
 
       // set orientation of skill
@@ -262,7 +262,7 @@ void SwipeSkillTool::createPreviewArrow(rviz::Arrow *&arrow, const Ogre::Vector3
                              double length, double alpha) {
   arrow = new rviz::Arrow(context_->getSceneManager(), scene_manager_->getRootSceneNode());
   arrow->set(0.5f * length, 0.05, 0.5f * length, 0.15);
-  arrow->setColor(1., 0.3, 0.0, alpha);
+  arrow->setColor(0.6, 0.6, 0.6, alpha);
   arrow->setPosition(base);
   arrow->setDirection(direction);
   arrow->getSceneNode()->setVisible(false);
